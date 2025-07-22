@@ -9,8 +9,8 @@ from io import BytesIO
 import win32com.client
 
 ### Folders
-input_folder = 'source'
-output_folder = 'final'
+input_folder = 'source/multi_plot_pos'
+output_folder = 'final/multi_plot_pos'
 tags_folder = 'tags'
 
 ### Make required folders

@@ -9,8 +9,8 @@ from io import BytesIO
 import win32com.client
 
 ### Folders
-input_folder = 'source'
-output_folder = 'final'
+input_folder = 'source/single'
+output_folder = 'final/single'
 tags_folder = 'tags'
 
 ### Make required folders
