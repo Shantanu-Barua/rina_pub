@@ -21,6 +21,16 @@ os.makedirs(tags_folder, exist_ok=True)
 ### Create output folders if they don't exist
 output_file = os.path.join(output_folder, 'multi_results_multi_pos.xlsx')
 
+### CSV file for R
+"""-----------------------------------------------------------------------"""
+csv_output_file = os.path.join(output_folder, 'multi_results_multi_pos.csv')
+
+if os.path.exists(csv_output_file): # If CSV exists already, remove it
+    os.remove(csv_output_file)
+
+r_data = []
+"""-----------------------------------------------------------------------"""
+
 ### Variations in estimate limiting
 def calculate_estimate_limit1(ci_value): # Standard
     if 0 <= ci_value <= 200:
@@ -270,6 +280,27 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
                     input_df = pd.DataFrame(data)
                     # print(input_df)
 
+                    ### Prepare to write CSV file for R
+                    # Ensure same length across arrays
+                    n = min(
+                        len(input_df["a"]),
+                        len(input_df["ci"]),
+                        len(input_df["tleaf"]),
+                        len(input_df["patm"])
+                    )
+
+                    df_r_temp = pd.DataFrame({
+                        "Obs": np.arange(1, n+1),
+                        "Plant": sheet_id,
+                        "Rep": 1,
+                        "Photo": input_df["a"].iloc[:n],
+                        "Ci": input_df["ci"].iloc[:n],
+                        "Tleaf": input_df["tleaf"].iloc[:n],
+                        "Press": input_df["patm"].iloc[:n]
+                    })
+
+                    r_data.append(df_r_temp)
+
                     ### Use average Tleaf, patm from measurement section, in case of null defualt value is set
                     r_t_leaf = np.mean(input_df['tleaf']) if not np.isnan(np.mean(input_df['tleaf'])) else 28.0
                     r_patm = np.mean(input_df['patm']) if not np.isnan(np.mean(input_df['patm'])) else 101
@@ -517,6 +548,18 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
             except Exception as e:
                 print(f"❌ Error processing {file}: {e}")
     
+"""Append df_r_temp to CSV file"""
+if r_data:
+    final_r_df = pd.concat(r_data, ignore_index=True)
+    with open(csv_output_file, "w", newline="") as f:
+        f.write("from py\n")  # A1 cell text
+    final_r_df.to_csv(csv_output_file, mode="a", index=False)
+    print("✅ .csv file has been added successfully!")
+else:
+    print("⚠️ No valid data found.")
+
+"""END: Append df_r_temp to CSV file"""
+
 
 """ Combined output sheet """
 

@@ -21,6 +21,16 @@ os.makedirs(tags_folder, exist_ok=True)
 ### Create output folders if they don't exist
 output_file = os.path.join(output_folder, 'single_results.xlsx')
 
+### CSV file for R
+"""-----------------------------------------------------------------------"""
+csv_output_file = os.path.join(output_folder, 'single_results.csv')
+
+if os.path.exists(csv_output_file): # If CSV exists already, remove it
+    os.remove(csv_output_file)
+
+r_data = []
+"""-----------------------------------------------------------------------"""
+
 ### Variations in estimate limiting
 def calculate_estimate_limit1(ci_value): # Standard
     if 0 <= ci_value <= 200:
@@ -111,6 +121,23 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
                 ci_values = pd.to_numeric(df_raw.iloc[15:, 11], errors='coerce').dropna().values
                 tleaf_values = pd.to_numeric(df_raw.iloc[15:, 19], errors='coerce').dropna().values
                 patm_values = pd.to_numeric(df_raw.iloc[15:, 64], errors='coerce').dropna().values
+
+                ### Prepare to write CSV file for R
+                # Ensure same length across arrays
+                n = min(len(a_values), len(ci_values), len(tleaf_values), len(patm_values))
+
+                df_r_temp = pd.DataFrame({
+                    "Obs": np.arange(1, n+1),
+                    "Plant": raw_id,
+                    "Rep": 1,
+                    "Photo": a_values[:n],
+                    "Ci": ci_values[:n],
+                    "Tleaf": tleaf_values[:n],
+                    "Press": patm_values[:n]
+                    
+                })
+
+                r_data.append(df_r_temp)
 
                 ### Use average Tleaf, patm from measurement section, in case of null defualt value is set
                 r_t_leaf = np.mean(tleaf_values) if not np.isnan(np.mean(tleaf_values)) else 28.0
@@ -422,6 +449,19 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
 
             except Exception as e:
                 print(f"❌ Error processing {file}: {e}")
+
+"""Append df_r_temp to CSV file"""
+if r_data:
+    final_r_df = pd.concat(r_data, ignore_index=True)
+    with open(csv_output_file, "w", newline="") as f:
+        f.write("from py\n")  # A1 cell text
+    final_r_df.to_csv(csv_output_file, mode="a", index=False)
+    print("✅ .csv file has been added successfully!")
+else:
+    print("⚠️ No valid data found.")
+
+"""END: Append df_r_temp to CSV file"""
+
 
 """ Combined output sheet """
 
