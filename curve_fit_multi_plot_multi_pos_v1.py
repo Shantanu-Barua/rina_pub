@@ -238,9 +238,9 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
                 # # print(cur_df)
                 """Moved inside chunk loop"""
 
-                ### Find sequence/range from A20 in "Remarks" sheet
+                ### Find sequence/range from (xA20x) E20 in "Remarks" sheet 
                 remarks_df = pd.read_excel(file_path, sheet_name="Remarks", header=None)
-                cell_value = str(remarks_df.iloc[19, 0])
+                cell_value = str(remarks_df.iloc[19, 4]) # Changed to [19, 4] from [19, 0]
                 id_range = re.findall(r'\b\d{3}[A-Z]\b', cell_value)
                 # print(id_range)
                                 
